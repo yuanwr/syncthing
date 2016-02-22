@@ -27,6 +27,7 @@ import (
 	"github.com/syncthing/syncthing/lib/symlinks"
 	"github.com/syncthing/syncthing/lib/sync"
 	"github.com/syncthing/syncthing/lib/versioner"
+	"github.com/syncthing/syncthing/lib/fswatcher"
 )
 
 // TODO: Stop on errors
@@ -187,6 +188,9 @@ func (p *rwFolder) Serve() {
 	var prevVer int64
 	var prevIgnoreHash string
 
+	fsWatcher := fswatcher.NewFsWatcher(p.dir)
+	go fsWatcher.WaitForEvents()
+
 	// We don't start pulling files until a scan has been completed.
 	initialScanCompleted := false
 
@@ -308,6 +312,8 @@ func (p *rwFolder) Serve() {
 
 		case next := <-p.delayScan:
 			p.scanTimer.Reset(next)
+		case <-fsWatcher.EventsReady:
+			fsWatcher.ProcessEvents()
 		}
 	}
 }
