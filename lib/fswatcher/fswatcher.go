@@ -7,6 +7,8 @@
 package fswatcher
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"github.com/zillode/notify"
 )
@@ -25,6 +27,7 @@ type FsWatcher struct {
 func NewFsWatcher(folderModelChan chan FsEvent, folderPath string) (*FsWatcher, error) {
 	notifyChan, err := setupNotifications(folderPath)
 	if err != nil {
+		l.Warnln(err)
 		return nil, err
 	}
 	watcher := &FsWatcher{
@@ -49,21 +52,16 @@ type fsWatcherError struct {
 	originalError error
 }
 
-func (e fsWatcherError) Error() string {
-	return e.originalError.Error()
-}
-
 func setupNotifications(path string) (chan notify.EventInfo, error) {
 	c := make(chan notify.EventInfo, maxFiles)
 	if err := notify.Watch(path, c, notify.All); err != nil {
-		l.Warnf("Failed to install inotify handler for %s. Error: %s",
-			path, err)
 		if strings.Contains(err.Error(), "too many open files") ||
 			strings.Contains(err.Error(), "no space left on device") {
-			l.Warnf("Please increase inotify limits, see http://bit.ly/1PxkdUC for more information.")
-			return nil, fsWatcherError{err}
+			return nil, errors.New("Please increase inotify limits, see http://bit.ly/1PxkdUC for more information.")
 		}
-		return nil, err
+		return nil, fmt.Errorf(
+			"Failed to install inotify handler for %s. Error: %s",
+			path, err)
 	}
 	l.Debugf("Setup filesystem notification for %s", path)
 	return c, nil
