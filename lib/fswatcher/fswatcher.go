@@ -39,11 +39,14 @@ func NewFsWatcher(folderModelChan chan FsEvent, folderPath string) (*FsWatcher, 
 	return watcher, nil
 }
 
-func (watcher *FsWatcher) ProcessEvents() {
+func (watcher *FsWatcher) ChangedSubfolders() []string {
+	var paths []string
 	for _, event := range watcher.FsEvents {
 		l.Debugf("Got event for: %#v", event)
+		paths = append(paths, event.path)
 	}
 	watcher.FsEvents = nil
+	return paths
 }
 
 var maxFiles = 512

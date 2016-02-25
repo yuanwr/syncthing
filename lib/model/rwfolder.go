@@ -322,7 +322,8 @@ func (p *rwFolder) Serve() {
 		case next := <-p.delayScan:
 			p.scanTimer.Reset(next)
 		case <-p.fsWatchChan:
-			fsWatcher.ProcessEvents()
+			l.Debugln(p, "filesystem notification rescan")
+			p.scanSubsIfHealthy(fsWatcher.ChangedSubfolders())
 		}
 	}
 }
