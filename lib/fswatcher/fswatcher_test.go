@@ -21,14 +21,12 @@ func TestRelativeSubPath(t *testing.T) {
 	pathSets := []paths{
 		paths{"/home/user/Sync/blah", "/home/user/Sync/", "blah"},
 		paths{"/home/user/Sync/blah", "/home/user/Sync", "blah"},
-		paths{"/home/user/Sync/blah/", "/home/user/Sync/", "blah/"},
-		paths{"/home/user/Sync/blah/", "/home/user/Sync", "blah/"},
-		paths{"/home/user/Sync", "/home/user/Sync", ""},
-		paths{"/home/user/Sync/", "/home/user/Sync", ""},
-		paths{"/home/user/Sync", "/home/user/Sync/", ""}, // the inotify fn fails on this one by returning 'home/user/Sync'
-		paths{"/home/user/Sync/", "/home/user/Sync/", ""},
-		paths{"/another/path/Sync", "/home/user/Sync/", "/another/path/Sync"},
-		paths{"/another/path/Sync/", "/home/user/Sync/", "/another/path/Sync/"},
+		paths{"/home/user/Sync/blah/", "/home/user/Sync/", "blah"},
+		paths{"/home/user/Sync/blah/", "/home/user/Sync", "blah"},
+		paths{"/home/user/Sync", "/home/user/Sync", "."},
+		paths{"/home/user/Sync/", "/home/user/Sync", "."},
+		paths{"/home/user/Sync", "/home/user/Sync/", "."},
+		paths{"/home/user/Sync/", "/home/user/Sync/", "."},
 	}
 	for _, paths := range pathSets {
 		result := relativePath(paths.fullSubPath, paths.folderPath)
