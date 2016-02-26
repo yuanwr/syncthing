@@ -107,7 +107,7 @@ type rwFolder struct {
 
 	errors    map[string]string // path -> error string
 	errorsMut sync.Mutex
-	fsWatchChan chan fswatcher.FsEvent
+	fsWatchChan chan bool
 }
 
 func newRWFolder(m *Model, shortID protocol.ShortID, cfg config.FolderConfiguration) *rwFolder {
@@ -142,7 +142,7 @@ func newRWFolder(m *Model, shortID protocol.ShortID, cfg config.FolderConfigurat
 		remoteIndex: make(chan struct{}, 1), // This needs to be 1-buffered so that we queue a notification if we're busy doing a pull when it comes.
 
 		errorsMut: sync.NewMutex(),
-		fsWatchChan: make(chan fswatcher.FsEvent),
+		fsWatchChan: make(chan bool),
 	}
 
 	if p.copiers == 0 {

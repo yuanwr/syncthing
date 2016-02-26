@@ -20,12 +20,12 @@ type FsEvent struct {
 
 type FsWatcher struct {
 	folderPath string
-	folderModelChan  chan FsEvent
+	folderModelChan  chan bool
 	FsEvents []FsEvent
 	notifyChan chan notify.EventInfo
 }
 
-func NewFsWatcher(folderModelChan chan FsEvent, folderPath string) (*FsWatcher, error) {
+func NewFsWatcher(folderModelChan chan bool, folderPath string) (*FsWatcher, error) {
 	notifyChan, err := setupNotifications(folderPath)
 	if err != nil {
 		l.Warnln(err)
@@ -77,12 +77,24 @@ func (watcher *FsWatcher) WaitForEvents() {
 		select {
 		case event, _ := <- watcher.notifyChan:
 			//l.Debugf("Got: %#v", event)
-			// TODO: get rid of this FsEvents list
-			watcher.FsEvents = append(watcher.FsEvents,
-				FsEvent{event.Path()})
-			watcher.folderModelChan <- FsEvent{event.Path()}
+			// TODO: buffer events for a short time
+			newEvent := watcher.newFsEvent(event.Path())
+			if newEvent != nil {
+				watcher.FsEvents = append(watcher.FsEvents, *newEvent)
+			}
+			if len(watcher.FsEvents) > 0 {
+				watcher.folderModelChan <- true
+			}
 		}
 	}
+}
+
+func (watcher *FsWatcher) newFsEvent(eventPath string) *FsEvent {
+	if isSubpath(eventPath, watcher.folderPath) {
+		path := relativePath(eventPath, watcher.folderPath)
+		return &FsEvent{path}
+	}
+	return nil
 }
 
 func relativePath(path string, folderPath string) string {
