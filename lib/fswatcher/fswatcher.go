@@ -21,12 +21,12 @@ type FsEvent struct {
 
 type FsWatcher struct {
 	folderPath string
-	notifyModelChan chan<- bool
+	notifyModelChan chan<- []FsEvent
 	FsEvents []FsEvent
 	fsEventChan chan notify.EventInfo
 }
 
-func NewFsWatcher(notifyModelChan chan<- bool, folderPath string) (*FsWatcher, error) {
+func NewFsWatcher(notifyModelChan chan<- []FsEvent, folderPath string) (*FsWatcher, error) {
 	fsEventChan, err := setupNotifications(folderPath)
 	if err != nil {
 		l.Warnln(err)
@@ -41,14 +41,11 @@ func NewFsWatcher(notifyModelChan chan<- bool, folderPath string) (*FsWatcher, e
 	return watcher, nil
 }
 
-func (watcher *FsWatcher) ChangedSubfolders() []string {
-	// Runs in the same goroutine as the model
+func ChangedSubfolders(events []FsEvent) []string {
 	var paths []string
-	for _, event := range watcher.FsEvents {
-		l.Debugf("Got event for: %#v", event)
+	for _, event := range events {
 		paths = append(paths, event.path)
 	}
-	watcher.FsEvents = nil
 	return paths
 }
 
@@ -86,7 +83,7 @@ func (watcher *FsWatcher) WaitForEvents() {
 				watcher.FsEvents = append(watcher.FsEvents, *newEvent)
 			}
 			if len(watcher.FsEvents) > 0 {
-				watcher.notifyModelChan <- true
+				watcher.notifyModelChan <- watcher.FsEvents
 			}
 		}
 	}
