@@ -27,6 +27,8 @@ type FsWatcher struct {
 	fsEventChan <-chan notify.EventInfo
 	WatchingFs bool
 	notifyDelay time.Duration
+	notifyTimer time.Timer
+	notifyTimerNeedsReset bool
 }
 
 func NewFsWatcher(folderPath string) *FsWatcher {
@@ -36,7 +38,8 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 		FsEvents: make([]FsEvent, 0),
 		fsEventChan: nil,
 		WatchingFs: false,
-		notifyDelay:  time.Duration(500) * time.Millisecond,
+		notifyDelay: fastNotifyDelay,
+		notifyTimerNeedsReset: false,
 	}
 }
 
@@ -82,24 +85,28 @@ func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
 }
 
 func (watcher *FsWatcher) watchFilesystem() {
-	notifyTimer := time.NewTimer(watcher.notifyDelay)
+	watcher.notifyTimer = *time.NewTimer(watcher.notifyDelay)
 	defer func() {
-		notifyTimer.Stop()
+		watcher.notifyTimer.Stop()
 	}()
 	for {
+		watcher.resetNotifyTimerIfNeeded()
 		select {
 		case event, _ := <- watcher.fsEventChan:
+			watcher.speedUpNotifyTimer()
 			newEvent := watcher.newFsEvent(event.Path())
 			if newEvent != nil {
 				watcher.FsEvents = append(watcher.FsEvents, *newEvent)
 			}
-		case <-notifyTimer.C:
+		case <-watcher.notifyTimer.C:
+			watcher.notifyTimerNeedsReset = true
 			if len(watcher.FsEvents) > 0 {
 				l.Debugf("Notifying about %d fs events\n", len(watcher.FsEvents))
 				watcher.notifyModelChan <- watcher.FsEvents
+			} else {
+				watcher.slowDownNotifyTimer()
 			}
 			watcher.FsEvents = nil
-			notifyTimer.Reset(watcher.notifyDelay)
 		}
 	}
 }
@@ -126,3 +133,32 @@ func isSubpath(path string, folderPath string) bool {
 	}
 	return strings.HasPrefix(path, folderPath)
 }
+
+func (watcher *FsWatcher) resetNotifyTimerIfNeeded() {
+	if watcher.notifyTimerNeedsReset {
+	l.Debugf("Resetting notifyTimer to %#v\n", watcher.notifyDelay)
+		watcher.notifyTimer.Reset(watcher.notifyDelay)
+		watcher.notifyTimerNeedsReset = false
+	}
+}
+
+func (watcher *FsWatcher) speedUpNotifyTimer() {
+	if watcher.notifyDelay != fastNotifyDelay {
+		watcher.notifyDelay = fastNotifyDelay
+		l.Debugf("Speeding up notifyTimer to %#v\n", watcher.notifyDelay)
+		watcher.notifyTimerNeedsReset = true
+	}
+}
+
+func (watcher *FsWatcher) slowDownNotifyTimer() {
+	if watcher.notifyDelay != slowNotifyDelay {
+		watcher.notifyDelay = slowNotifyDelay
+		l.Debugf("Slowing down notifyTimer to %#v\n", watcher.notifyDelay)
+		watcher.notifyTimerNeedsReset = true
+	}
+}
+
+const (
+	slowNotifyDelay = time.Duration(60) * time.Second
+	fastNotifyDelay = time.Duration(500) * time.Millisecond
+)
