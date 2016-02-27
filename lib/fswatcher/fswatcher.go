@@ -43,6 +43,18 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 	}
 }
 
+func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
+	notifyModelChan := make(chan []FsEvent)
+	fsEventChan, err := setupNotifications(watcher.folderPath)
+	if fsEventChan != nil {
+		watcher.WatchingFs = true
+		watcher.fsEventChan = fsEventChan
+		go watcher.watchFilesystem()
+	}
+	watcher.notifyModelChan = notifyModelChan
+	return notifyModelChan, err
+}
+
 func ChangedSubfolders(events []FsEvent) []string {
 	var paths []string
 	for _, event := range events {
@@ -70,18 +82,6 @@ func setupNotifications(path string) (chan notify.EventInfo, error) {
 	}
 	l.Debugf("Setup filesystem notification for %s", path)
 	return c, nil
-}
-
-func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
-	notifyModelChan := make(chan []FsEvent)
-	fsEventChan, err := setupNotifications(watcher.folderPath)
-	if fsEventChan != nil {
-		watcher.WatchingFs = true
-		watcher.fsEventChan = fsEventChan
-		go watcher.watchFilesystem()
-	}
-	watcher.notifyModelChan = notifyModelChan
-	return notifyModelChan, err
 }
 
 func (watcher *FsWatcher) watchFilesystem() {
