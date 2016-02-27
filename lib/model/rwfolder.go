@@ -320,7 +320,7 @@ func (p *rwFolder) Serve() {
 			p.scanTimer.Reset(next)
 		case fsEvents := <-fsWatchChan:
 			l.Debugln(p, "filesystem notification rescan")
-			p.scanSubsIfHealthy(fswatcher.ChangedSubfolders(fsEvents))
+			p.scanSubsIfHealthy(fswatcher.ExtractChangedPaths(fsEvents))
 		}
 	}
 }

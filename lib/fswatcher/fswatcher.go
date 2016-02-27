@@ -55,7 +55,7 @@ func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
 	return notifyModelChan, err
 }
 
-func ChangedSubfolders(events []FsEvent) []string {
+func ExtractChangedPaths(events []FsEvent) []string {
 	var paths []string
 	for _, event := range events {
 		paths = append(paths, event.path)
