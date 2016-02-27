@@ -23,22 +23,18 @@ type FsWatcher struct {
 	folderPath string
 	notifyModelChan chan<- []FsEvent
 	FsEvents []FsEvent
-	fsEventChan chan notify.EventInfo
+	fsEventChan <-chan notify.EventInfo
+	WatchingFs bool
 }
 
-func NewFsWatcher(notifyModelChan chan<- []FsEvent, folderPath string) (*FsWatcher, error) {
-	fsEventChan, err := setupNotifications(folderPath)
-	if err != nil {
-		l.Warnln(err)
-		return nil, err
-	}
-	watcher := &FsWatcher{
+func NewFsWatcher(folderPath string) *FsWatcher {
+	return &FsWatcher{
 		folderPath: folderPath,
-		notifyModelChan: notifyModelChan,
+		notifyModelChan: nil,
 		FsEvents: make([]FsEvent, 0),
-		fsEventChan: fsEventChan,
+		fsEventChan: nil,
+		WatchingFs: false,
 	}
-	return watcher, nil
 }
 
 func ChangedSubfolders(events []FsEvent) []string {
@@ -70,9 +66,19 @@ func setupNotifications(path string) (chan notify.EventInfo, error) {
 	return c, nil
 }
 
-func (watcher *FsWatcher) WaitForEvents() {
-	// Runs in a different goroutine from model
-	defer notify.Stop(watcher.fsEventChan)
+func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
+	notifyModelChan := make(chan []FsEvent)
+	fsEventChan, err := setupNotifications(watcher.folderPath)
+	if fsEventChan != nil {
+		watcher.WatchingFs = true
+		watcher.fsEventChan = fsEventChan
+		go watcher.watchFilesystem()
+	}
+	watcher.notifyModelChan = notifyModelChan
+	return notifyModelChan, err
+}
+
+func (watcher *FsWatcher) watchFilesystem() {
 	for {
 		select {
 		case event, _ := <- watcher.fsEventChan:
