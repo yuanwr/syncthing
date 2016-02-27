@@ -42,6 +42,7 @@ func NewFsWatcher(notifyModelChan chan<- bool, folderPath string) (*FsWatcher, e
 }
 
 func (watcher *FsWatcher) ChangedSubfolders() []string {
+	// Runs in the same goroutine as the model
 	var paths []string
 	for _, event := range watcher.FsEvents {
 		l.Debugf("Got event for: %#v", event)
@@ -73,6 +74,7 @@ func setupNotifications(path string) (chan notify.EventInfo, error) {
 }
 
 func (watcher *FsWatcher) WaitForEvents() {
+	// Runs in a different goroutine from model
 	defer notify.Stop(watcher.fsEventChan)
 	for {
 		select {
