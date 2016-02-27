@@ -65,10 +65,6 @@ func ChangedSubfolders(events []FsEvent) []string {
 
 var maxFiles = 512
 
-type fsWatcherError struct {
-	originalError error
-}
-
 func setupNotifications(path string) (chan notify.EventInfo, error) {
 	c := make(chan notify.EventInfo, maxFiles)
 	if err := notify.Watch(path, c, notify.All); err != nil {
