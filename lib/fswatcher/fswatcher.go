@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"github.com/zillode/notify"
 )
 
@@ -25,6 +26,7 @@ type FsWatcher struct {
 	FsEvents []FsEvent
 	fsEventChan <-chan notify.EventInfo
 	WatchingFs bool
+	notifyDelay time.Duration
 }
 
 func NewFsWatcher(folderPath string) *FsWatcher {
@@ -34,6 +36,7 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 		FsEvents: make([]FsEvent, 0),
 		fsEventChan: nil,
 		WatchingFs: false,
+		notifyDelay:  time.Duration(500) * time.Millisecond,
 	}
 }
 
@@ -79,18 +82,24 @@ func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
 }
 
 func (watcher *FsWatcher) watchFilesystem() {
+	notifyTimer := time.NewTimer(watcher.notifyDelay)
+	defer func() {
+		notifyTimer.Stop()
+	}()
 	for {
 		select {
 		case event, _ := <- watcher.fsEventChan:
-			//l.Debugf("Got: %#v", event)
-			// TODO: buffer events for a short time
 			newEvent := watcher.newFsEvent(event.Path())
 			if newEvent != nil {
 				watcher.FsEvents = append(watcher.FsEvents, *newEvent)
 			}
+		case <-notifyTimer.C:
 			if len(watcher.FsEvents) > 0 {
+				l.Debugf("Notifying about %d fs events\n", len(watcher.FsEvents))
 				watcher.notifyModelChan <- watcher.FsEvents
 			}
+			watcher.FsEvents = nil
+			notifyTimer.Reset(watcher.notifyDelay)
 		}
 	}
 }
