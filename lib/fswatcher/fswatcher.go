@@ -21,12 +21,12 @@ type FsEvent struct {
 
 type FsWatcher struct {
 	folderPath string
-	folderModelChan chan<- bool
+	notifyModelChan chan<- bool
 	FsEvents []FsEvent
 	fsEventChan chan notify.EventInfo
 }
 
-func NewFsWatcher(folderModelChan chan<- bool, folderPath string) (*FsWatcher, error) {
+func NewFsWatcher(notifyModelChan chan<- bool, folderPath string) (*FsWatcher, error) {
 	fsEventChan, err := setupNotifications(folderPath)
 	if err != nil {
 		l.Warnln(err)
@@ -34,7 +34,7 @@ func NewFsWatcher(folderModelChan chan<- bool, folderPath string) (*FsWatcher, e
 	}
 	watcher := &FsWatcher{
 		folderPath: folderPath,
-		folderModelChan: folderModelChan,
+		notifyModelChan: notifyModelChan,
 		FsEvents: make([]FsEvent, 0),
 		fsEventChan: fsEventChan,
 	}
@@ -84,7 +84,7 @@ func (watcher *FsWatcher) WaitForEvents() {
 				watcher.FsEvents = append(watcher.FsEvents, *newEvent)
 			}
 			if len(watcher.FsEvents) > 0 {
-				watcher.folderModelChan <- true
+				watcher.notifyModelChan <- true
 			}
 		}
 	}
