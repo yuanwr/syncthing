@@ -31,6 +31,7 @@ type FsWatcher struct {
 	notifyDelay time.Duration
 	notifyTimer *time.Timer
 	notifyTimerNeedsReset bool
+	inProgress map[string]bool
 }
 
 func NewFsWatcher(folderPath string) *FsWatcher {
@@ -42,6 +43,7 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 		WatchingFs: false,
 		notifyDelay: fastNotifyDelay,
 		notifyTimerNeedsReset: false,
+		inProgress: make(map[string]bool),
 	}
 }
 
@@ -87,7 +89,8 @@ func setupNotifications(path string) (chan notify.EventInfo, error) {
 func (watcher *FsWatcher) watchFilesystem() {
 	watcher.notifyTimer = time.NewTimer(watcher.notifyDelay)
 	defer watcher.notifyTimer.Stop()
-	finishedFileEventSubscription := events.Default.Subscribe(events.ItemFinished)
+	inProgressItemSubscription := events.Default.Subscribe(
+		events.ItemStarted | events.ItemFinished)
 	for {
 		watcher.resetNotifyTimerIfNeeded()
 		select {
@@ -96,8 +99,8 @@ func (watcher *FsWatcher) watchFilesystem() {
 			watcher.storeFsEvent(event)
 		case <-watcher.notifyTimer.C:
 			watcher.sendStoredEventsToModelOrSlowDownTimer()
-		case event := <-finishedFileEventSubscription.C():
-			watcher.skipPathChangedByUs(event)
+		case event := <-inProgressItemSubscription.C():
+			watcher.updateInProgressSet(event)
 		}
 	}
 }
@@ -159,7 +162,12 @@ const (
 func (watcher *FsWatcher) storeFsEvent(event notify.EventInfo) {
 	newEvent := watcher.newFsEvent(event.Path())
 	if newEvent != nil {
-		watcher.fsEvents[newEvent.path] = newEvent
+		if watcher.pathInProgress(newEvent.path) {
+			l.Debugf("Skipping notification for finished path: %s\n",
+				newEvent.path)
+		} else {
+			watcher.fsEvents[newEvent.path] = newEvent
+		}
 	}
 }
 func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
@@ -173,12 +181,21 @@ func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
 	watcher.fsEvents = make(map[string]*FsEvent)
 }
 
-func (watcher *FsWatcher) skipPathChangedByUs(event events.Event) {
-	path := event.Data.(map[string]interface{})["item"].(string)
-	l.Debugf("Skipping notification for finished path: %s\n", path)
-	delete(watcher.fsEvents, path)
+func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
+	if event.Type == events.ItemStarted {
+		path := event.Data.(map[string]string)["item"]
+		watcher.inProgress[path] = true
+	} else if event.Type == events.ItemFinished {
+		path := event.Data.(map[string]interface{})["item"].(string)
+		delete(watcher.inProgress, path)
+	}
 }
 
 func isSpecialPath(path string) bool {
 	return strings.Contains(path, ".syncthing.") && strings.HasSuffix(path, ".tmp")
+}
+
+func (watcher *FsWatcher) pathInProgress(path string) bool {
+	_, exists := watcher.inProgress[path]
+	return exists
 }
