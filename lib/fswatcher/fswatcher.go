@@ -84,9 +84,7 @@ func setupNotifications(path string) (chan notify.EventInfo, error) {
 
 func (watcher *FsWatcher) watchFilesystem() {
 	watcher.notifyTimer = *time.NewTimer(watcher.notifyDelay)
-	defer func() {
-		watcher.notifyTimer.Stop()
-	}()
+	defer watcher.notifyTimer.Stop()
 	finishedFileEventSubscription := events.Default.Subscribe(events.ItemFinished)
 	for {
 		watcher.resetNotifyTimerIfNeeded()
