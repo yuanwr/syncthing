@@ -70,6 +70,8 @@ var maxFiles = 512
 func setupNotifications(path string) (chan notify.EventInfo, error) {
 	c := make(chan notify.EventInfo, maxFiles)
 	if err := notify.Watch(path, c, notify.All); err != nil {
+		notify.Stop(c)
+		close(c)
 		if strings.Contains(err.Error(), "too many open files") ||
 			strings.Contains(err.Error(), "no space left on device") {
 			return nil, errors.New("Please increase inotify limits, see http://bit.ly/1PxkdUC for more information.")
