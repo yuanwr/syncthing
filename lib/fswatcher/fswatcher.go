@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 	"github.com/zillode/notify"
+
+	"github.com/syncthing/syncthing/lib/events"
 )
 
 type FsEvent struct {
@@ -85,6 +87,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 	defer func() {
 		watcher.notifyTimer.Stop()
 	}()
+	finishedFileEventSubscription := events.Default.Subscribe(events.ItemFinished)
 	for {
 		watcher.resetNotifyTimerIfNeeded()
 		select {
@@ -103,6 +106,8 @@ func (watcher *FsWatcher) watchFilesystem() {
 				watcher.slowDownNotifyTimer()
 			}
 			watcher.fsEvents = make(map[string]FsEvent)
+		case event := <-finishedFileEventSubscription.C():
+			watcher.skipPathChangedByUs(event)
 		}
 	}
 }
@@ -161,4 +166,14 @@ const (
 
 func (watcher *FsWatcher) addEvent(event FsEvent) {
 	watcher.fsEvents[event.path] = event
+}
+
+func (watcher *FsWatcher) removeEventIfPresent(path string) {
+	delete(watcher.fsEvents, path)
+}
+
+func (watcher *FsWatcher) skipPathChangedByUs(event events.Event) {
+	path := event.Data.(map[string]interface{})["item"].(string)
+	l.Debugf("Skipping notification for finished path: %s\n", path)
+	watcher.removeEventIfPresent(path)
 }
