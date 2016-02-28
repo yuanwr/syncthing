@@ -93,10 +93,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 		select {
 		case event, _ := <- watcher.fsEventChan:
 			watcher.speedUpNotifyTimer()
-			newEvent := watcher.newFsEvent(event.Path())
-			if newEvent != nil {
-				watcher.addEvent(*newEvent)
-			}
+			watcher.storeFsEvent(event)
 		case <-watcher.notifyTimer.C:
 			watcher.notifyModelAboutStoredFsEvents()
 		case event := <-finishedFileEventSubscription.C():
@@ -165,6 +162,12 @@ func (watcher *FsWatcher) removeEventIfPresent(path string) {
 	delete(watcher.fsEvents, path)
 }
 
+func (watcher *FsWatcher) storeFsEvent(event notify.EventInfo) {
+	newEvent := watcher.newFsEvent(event.Path())
+	if newEvent != nil {
+		watcher.addEvent(*newEvent)
+	}
+}
 func (watcher *FsWatcher) notifyModelAboutStoredFsEvents() {
 	watcher.notifyTimerNeedsReset = true
 	if len(watcher.fsEvents) > 0 {
