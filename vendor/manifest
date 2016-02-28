@@ -120,6 +120,12 @@
 			"path": "/qr"
 		},
 		{
+			"importpath": "github.com/zillode/notify",
+			"repository": "https://github.com/zillode/notify",
+			"revision": "921f2bc094bff902bf6089603902a84ac988d351",
+			"branch": "master"
+		},
+		{
 			"importpath": "golang.org/x/crypto/bcrypt",
 			"repository": "https://go.googlesource.com/crypto",
 			"revision": "5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3",
