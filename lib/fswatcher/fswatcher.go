@@ -29,7 +29,7 @@ type FsWatcher struct {
 	fsEventChan <-chan notify.EventInfo
 	WatchingFs bool
 	notifyDelay time.Duration
-	notifyTimer time.Timer
+	notifyTimer *time.Timer
 	notifyTimerNeedsReset bool
 }
 
@@ -83,7 +83,7 @@ func setupNotifications(path string) (chan notify.EventInfo, error) {
 }
 
 func (watcher *FsWatcher) watchFilesystem() {
-	watcher.notifyTimer = *time.NewTimer(watcher.notifyDelay)
+	watcher.notifyTimer = time.NewTimer(watcher.notifyDelay)
 	defer watcher.notifyTimer.Stop()
 	finishedFileEventSubscription := events.Default.Subscribe(events.ItemFinished)
 	for {
