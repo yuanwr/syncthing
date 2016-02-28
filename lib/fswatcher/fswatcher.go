@@ -154,10 +154,6 @@ const (
 	fastNotifyDelay = time.Duration(500) * time.Millisecond
 )
 
-func (watcher *FsWatcher) addEvent(event FsEvent) {
-	watcher.fsEvents[event.path] = event
-}
-
 func (watcher *FsWatcher) removeEventIfPresent(path string) {
 	delete(watcher.fsEvents, path)
 }
@@ -165,7 +161,7 @@ func (watcher *FsWatcher) removeEventIfPresent(path string) {
 func (watcher *FsWatcher) storeFsEvent(event notify.EventInfo) {
 	newEvent := watcher.newFsEvent(event.Path())
 	if newEvent != nil {
-		watcher.addEvent(*newEvent)
+		watcher.fsEvents[newEvent.path] = *newEvent
 	}
 }
 func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
