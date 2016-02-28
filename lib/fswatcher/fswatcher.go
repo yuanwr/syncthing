@@ -22,8 +22,8 @@ type FsEvent struct {
 
 type FsWatcher struct {
 	folderPath string
-	notifyModelChan chan<- []FsEvent
-	FsEvents []FsEvent
+	notifyModelChan chan<- map[string]FsEvent
+	fsEvents map[string]FsEvent
 	fsEventChan <-chan notify.EventInfo
 	WatchingFs bool
 	notifyDelay time.Duration
@@ -35,7 +35,7 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 	return &FsWatcher{
 		folderPath: folderPath,
 		notifyModelChan: nil,
-		FsEvents: make([]FsEvent, 0),
+		fsEvents: make(map[string]FsEvent),
 		fsEventChan: nil,
 		WatchingFs: false,
 		notifyDelay: fastNotifyDelay,
@@ -43,8 +43,8 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 	}
 }
 
-func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
-	notifyModelChan := make(chan []FsEvent)
+func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan map[string]FsEvent, error) {
+	notifyModelChan := make(chan map[string]FsEvent)
 	fsEventChan, err := setupNotifications(watcher.folderPath)
 	if fsEventChan != nil {
 		watcher.WatchingFs = true
@@ -55,10 +55,10 @@ func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []FsEvent, error) {
 	return notifyModelChan, err
 }
 
-func ExtractChangedPaths(events []FsEvent) []string {
+func ExtractChangedPaths(events map[string]FsEvent) []string {
 	var paths []string
-	for _, event := range events {
-		paths = append(paths, event.path)
+	for path := range events {
+		paths = append(paths, path)
 	}
 	return paths
 }
@@ -96,13 +96,13 @@ func (watcher *FsWatcher) watchFilesystem() {
 			}
 		case <-watcher.notifyTimer.C:
 			watcher.notifyTimerNeedsReset = true
-			if len(watcher.FsEvents) > 0 {
-				l.Debugf("Notifying about %d fs events\n", len(watcher.FsEvents))
-				watcher.notifyModelChan <- watcher.FsEvents
+			if len(watcher.fsEvents) > 0 {
+				l.Debugf("Notifying about %d fs events\n", len(watcher.fsEvents))
+				watcher.notifyModelChan <- watcher.fsEvents
 			} else {
 				watcher.slowDownNotifyTimer()
 			}
-			watcher.FsEvents = nil
+			watcher.fsEvents = make(map[string]FsEvent)
 		}
 	}
 }
@@ -160,5 +160,5 @@ const (
 )
 
 func (watcher *FsWatcher) addEvent(event FsEvent) {
-	watcher.FsEvents = append(watcher.FsEvents, event)
+	watcher.fsEvents[event.path] = event
 }
