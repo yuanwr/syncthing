@@ -98,14 +98,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 				watcher.addEvent(*newEvent)
 			}
 		case <-watcher.notifyTimer.C:
-			watcher.notifyTimerNeedsReset = true
-			if len(watcher.fsEvents) > 0 {
-				l.Debugf("Notifying about %d fs events\n", len(watcher.fsEvents))
-				watcher.notifyModelChan <- watcher.fsEvents
-			} else {
-				watcher.slowDownNotifyTimer()
-			}
-			watcher.fsEvents = make(map[string]FsEvent)
+			watcher.notifyModelAboutStoredFsEvents()
 		case event := <-finishedFileEventSubscription.C():
 			watcher.skipPathChangedByUs(event)
 		}
@@ -170,6 +163,17 @@ func (watcher *FsWatcher) addEvent(event FsEvent) {
 
 func (watcher *FsWatcher) removeEventIfPresent(path string) {
 	delete(watcher.fsEvents, path)
+}
+
+func (watcher *FsWatcher) notifyModelAboutStoredFsEvents() {
+	watcher.notifyTimerNeedsReset = true
+	if len(watcher.fsEvents) > 0 {
+		l.Debugf("Notifying about %d fs events\n", len(watcher.fsEvents))
+		watcher.notifyModelChan <- watcher.fsEvents
+	} else {
+		watcher.slowDownNotifyTimer()
+	}
+	watcher.fsEvents = make(map[string]FsEvent)
 }
 
 func (watcher *FsWatcher) skipPathChangedByUs(event events.Event) {
