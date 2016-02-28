@@ -154,10 +154,6 @@ const (
 	fastNotifyDelay = time.Duration(500) * time.Millisecond
 )
 
-func (watcher *FsWatcher) removeEventIfPresent(path string) {
-	delete(watcher.fsEvents, path)
-}
-
 func (watcher *FsWatcher) storeFsEvent(event notify.EventInfo) {
 	newEvent := watcher.newFsEvent(event.Path())
 	if newEvent != nil {
@@ -178,7 +174,7 @@ func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
 func (watcher *FsWatcher) skipPathChangedByUs(event events.Event) {
 	path := event.Data.(map[string]interface{})["item"].(string)
 	l.Debugf("Skipping notification for finished path: %s\n", path)
-	watcher.removeEventIfPresent(path)
+	delete(watcher.fsEvents, path)
 }
 
 func isSpecialPath(path string) bool {
