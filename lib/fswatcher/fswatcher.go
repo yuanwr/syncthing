@@ -24,8 +24,8 @@ type FsEvent struct {
 
 type FsWatcher struct {
 	folderPath string
-	notifyModelChan chan<- map[string]FsEvent
-	fsEvents map[string]FsEvent
+	notifyModelChan chan<- map[string]*FsEvent
+	fsEvents map[string]*FsEvent
 	fsEventChan <-chan notify.EventInfo
 	WatchingFs bool
 	notifyDelay time.Duration
@@ -37,7 +37,7 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 	return &FsWatcher{
 		folderPath: folderPath,
 		notifyModelChan: nil,
-		fsEvents: make(map[string]FsEvent),
+		fsEvents: make(map[string]*FsEvent),
 		fsEventChan: nil,
 		WatchingFs: false,
 		notifyDelay: fastNotifyDelay,
@@ -45,8 +45,8 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 	}
 }
 
-func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan map[string]FsEvent, error) {
-	notifyModelChan := make(chan map[string]FsEvent)
+func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan map[string]*FsEvent, error) {
+	notifyModelChan := make(chan map[string]*FsEvent)
 	fsEventChan, err := setupNotifications(watcher.folderPath)
 	if fsEventChan != nil {
 		watcher.WatchingFs = true
@@ -57,7 +57,7 @@ func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan map[string]FsEvent, 
 	return notifyModelChan, err
 }
 
-func ExtractChangedPaths(events map[string]FsEvent) []string {
+func ExtractChangedPaths(events map[string]*FsEvent) []string {
 	var paths []string
 	for path := range events {
 		paths = append(paths, path)
@@ -161,7 +161,7 @@ func (watcher *FsWatcher) removeEventIfPresent(path string) {
 func (watcher *FsWatcher) storeFsEvent(event notify.EventInfo) {
 	newEvent := watcher.newFsEvent(event.Path())
 	if newEvent != nil {
-		watcher.fsEvents[newEvent.path] = *newEvent
+		watcher.fsEvents[newEvent.path] = newEvent
 	}
 }
 func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
@@ -172,7 +172,7 @@ func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
 	} else {
 		watcher.slowDownNotifyTimer()
 	}
-	watcher.fsEvents = make(map[string]FsEvent)
+	watcher.fsEvents = make(map[string]*FsEvent)
 }
 
 func (watcher *FsWatcher) skipPathChangedByUs(event events.Event) {
