@@ -105,7 +105,9 @@ func (watcher *FsWatcher) watchFilesystem() {
 func (watcher *FsWatcher) newFsEvent(eventPath string) *FsEvent {
 	if isSubpath(eventPath, watcher.folderPath) {
 		path := relativePath(eventPath, watcher.folderPath)
-		return &FsEvent{path}
+		if !isSpecialPath(path) {
+			return &FsEvent{path}
+		}
 	}
 	return nil
 }
@@ -183,4 +185,8 @@ func (watcher *FsWatcher) skipPathChangedByUs(event events.Event) {
 	path := event.Data.(map[string]interface{})["item"].(string)
 	l.Debugf("Skipping notification for finished path: %s\n", path)
 	watcher.removeEventIfPresent(path)
+}
+
+func isSpecialPath(path string) bool {
+	return strings.Contains(path, ".syncthing.") && strings.HasSuffix(path, ".tmp")
 }
