@@ -92,7 +92,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 			watcher.speedUpNotifyTimer()
 			newEvent := watcher.newFsEvent(event.Path())
 			if newEvent != nil {
-				watcher.FsEvents = append(watcher.FsEvents, *newEvent)
+				watcher.addEvent(*newEvent)
 			}
 		case <-watcher.notifyTimer.C:
 			watcher.notifyTimerNeedsReset = true
@@ -158,3 +158,7 @@ const (
 	slowNotifyDelay = time.Duration(60) * time.Second
 	fastNotifyDelay = time.Duration(500) * time.Millisecond
 )
+
+func (watcher *FsWatcher) addEvent(event FsEvent) {
+	watcher.FsEvents = append(watcher.FsEvents, event)
+}
