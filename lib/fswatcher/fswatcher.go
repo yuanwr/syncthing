@@ -9,11 +9,11 @@ package fswatcher
 import (
 	"errors"
 	"fmt"
+	"github.com/zillode/notify"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"github.com/zillode/notify"
 
 	"github.com/syncthing/syncthing/lib/events"
 )
@@ -23,27 +23,27 @@ type FsEvent struct {
 }
 
 type FsWatcher struct {
-	folderPath string
-	notifyModelChan chan<- map[string]*FsEvent
-	fsEvents map[string]*FsEvent
-	fsEventChan <-chan notify.EventInfo
-	WatchingFs bool
-	notifyDelay time.Duration
-	notifyTimer *time.Timer
+	folderPath            string
+	notifyModelChan       chan<- map[string]*FsEvent
+	fsEvents              map[string]*FsEvent
+	fsEventChan           <-chan notify.EventInfo
+	WatchingFs            bool
+	notifyDelay           time.Duration
+	notifyTimer           *time.Timer
 	notifyTimerNeedsReset bool
-	inProgress map[string]bool
+	inProgress            map[string]bool
 }
 
 func NewFsWatcher(folderPath string) *FsWatcher {
 	return &FsWatcher{
-		folderPath: folderPath,
-		notifyModelChan: nil,
-		fsEvents: make(map[string]*FsEvent),
-		fsEventChan: nil,
-		WatchingFs: false,
-		notifyDelay: fastNotifyDelay,
+		folderPath:            folderPath,
+		notifyModelChan:       nil,
+		fsEvents:              make(map[string]*FsEvent),
+		fsEventChan:           nil,
+		WatchingFs:            false,
+		notifyDelay:           fastNotifyDelay,
 		notifyTimerNeedsReset: false,
-		inProgress: make(map[string]bool),
+		inProgress:            make(map[string]bool),
 	}
 }
 
@@ -94,7 +94,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 	for {
 		watcher.resetNotifyTimerIfNeeded()
 		select {
-		case event, _ := <- watcher.fsEventChan:
+		case event, _ := <-watcher.fsEventChan:
 			watcher.speedUpNotifyTimer()
 			watcher.storeFsEvent(event)
 		case <-watcher.notifyTimer.C:
@@ -121,18 +121,18 @@ func relativePath(path string, folderPath string) string {
 }
 
 func isSubpath(path string, folderPath string) bool {
-	if len(path) > 1 && os.IsPathSeparator(path[len(path) - 1]) {
-		path = path[0:len(path)-1]
+	if len(path) > 1 && os.IsPathSeparator(path[len(path)-1]) {
+		path = path[0 : len(path)-1]
 	}
-	if len(folderPath) > 1 && os.IsPathSeparator(folderPath[len(folderPath) - 1]) {
-		folderPath = folderPath[0:len(folderPath)-1]
+	if len(folderPath) > 1 && os.IsPathSeparator(folderPath[len(folderPath)-1]) {
+		folderPath = folderPath[0 : len(folderPath)-1]
 	}
 	return strings.HasPrefix(path, folderPath)
 }
 
 func (watcher *FsWatcher) resetNotifyTimerIfNeeded() {
 	if watcher.notifyTimerNeedsReset {
-	l.Debugf("Resetting notifyTimer to %#v\n", watcher.notifyDelay)
+		l.Debugf("Resetting notifyTimer to %#v\n", watcher.notifyDelay)
 		watcher.notifyTimer.Reset(watcher.notifyDelay)
 		watcher.notifyTimerNeedsReset = false
 	}

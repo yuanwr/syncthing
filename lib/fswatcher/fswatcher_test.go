@@ -11,8 +11,8 @@ import (
 )
 
 type paths struct {
-	fullSubPath string
-	folderPath string
+	fullSubPath     string
+	folderPath      string
 	expectedSubPath string
 }
 
@@ -40,8 +40,8 @@ func TestRelativeSubPath(t *testing.T) {
 
 type subpathTest struct {
 	folderPath string
-	subPath string
-	isSubpath bool
+	subPath    string
+	isSubpath  bool
 }
 
 func TestIsSubpath(t *testing.T) {
