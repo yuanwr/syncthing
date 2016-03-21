@@ -21,6 +21,11 @@ func TestIgnoreOurOwnFsEvents(t *testing.T) {
 	sender := startInstance(t, 1)
 	defer checkedStop(t, sender)
 
+	log.Println("Starting receiver instance...")
+	cleanUp(t, 2)
+	receiver := startInstance(t, 2)
+	defer checkedStop(t, receiver)
+
 	log.Println("Creating directories and files...")
 	dirs := []string{"d1"}
 	files := []string{"d1/f1.TXT"}
@@ -32,6 +37,8 @@ func TestIgnoreOurOwnFsEvents(t *testing.T) {
 
 	expected := len(all)
 	assertFileCount(t, sender, "default", expected)
+
+	assertFileCount(t, receiver, "default", expected)
 }
 
 func cleanUp(t *testing.T, index int) {
