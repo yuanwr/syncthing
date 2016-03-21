@@ -20,27 +20,18 @@ func TestIgnoreOurOwnFsEvents(t *testing.T) {
 	cleanUp(t, 1)
 	sender := startInstance(t, 1)
 	defer checkedStop(t, sender)
-	log.Println("Starting receiver instance...")
-	cleanUp(t, 2)
-	receiver := startInstance(t, 2)
-	defer checkedStop(t, receiver)
 
+	log.Println("Creating directories and files...")
 	dirs := []string{"d1"}
 	files := []string{"d1/f1.TXT"}
 	all := append(files, dirs...)
-
-	log.Println("Creating directories and files...")
 	createDirectories(t, "s1", dirs)
 	createFiles(t, "s1", files)
-	rescan(t, sender)
-	log.Println("Waiting for sender to sync...")
+
 	waitForSync(t, sender)
 
-	model := getModel(t, sender, "default")
 	expected := len(all)
-	if model.LocalFiles != expected {
-		t.Fatalf("Incorrect number of files after initial scan, %d != %d", model.LocalFiles, expected)
-	}
+	assertFileCount(t, sender, "default", expected)
 }
 
 func cleanUp(t *testing.T, index int) {
