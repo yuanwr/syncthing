@@ -31,7 +31,7 @@ type FsWatcher struct {
 	notifyDelay           time.Duration
 	notifyTimer           *time.Timer
 	notifyTimerNeedsReset bool
-	inProgress            map[string]bool
+	inProgress            map[string]struct{}
 }
 
 func NewFsWatcher(folderPath string) *FsWatcher {
@@ -43,7 +43,7 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 		WatchingFs:            false,
 		notifyDelay:           fastNotifyDelay,
 		notifyTimerNeedsReset: false,
-		inProgress:            make(map[string]bool),
+		inProgress:            make(map[string]struct{}),
 	}
 }
 
@@ -184,7 +184,7 @@ func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
 func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
 	if event.Type == events.ItemStarted {
 		path := event.Data.(map[string]string)["item"]
-		watcher.inProgress[path] = true
+		watcher.inProgress[path] = struct{}{}
 	} else if event.Type == events.ItemFinished {
 		path := event.Data.(map[string]interface{})["item"].(string)
 		delete(watcher.inProgress, path)
