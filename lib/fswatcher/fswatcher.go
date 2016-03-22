@@ -48,13 +48,13 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 }
 
 func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan map[string]*FsEvent, error) {
-	notifyModelChan := make(chan map[string]*FsEvent)
 	fsEventChan, err := setupNotifications(watcher.folderPath)
 	if fsEventChan != nil {
 		watcher.WatchingFs = true
 		watcher.fsEventChan = fsEventChan
 		go watcher.watchFilesystem()
 	}
+	notifyModelChan := make(chan map[string]*FsEvent)
 	watcher.notifyModelChan = notifyModelChan
 	return notifyModelChan, err
 }
