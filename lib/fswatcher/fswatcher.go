@@ -108,7 +108,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 func (watcher *FsWatcher) newFsEvent(eventPath string) *FsEvent {
 	if isSubpath(eventPath, watcher.folderPath) {
 		path := relativePath(eventPath, watcher.folderPath)
-		if !isSpecialPath(path) {
+		if !shouldIgnore(path) {
 			return &FsEvent{path}
 		}
 	}
@@ -191,7 +191,7 @@ func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
 	}
 }
 
-func isSpecialPath(path string) bool {
+func shouldIgnore(path string) bool {
 	return strings.Contains(path, ".syncthing.") &&
 		strings.HasSuffix(path, ".tmp") ||
 		path == ".stfolder"
