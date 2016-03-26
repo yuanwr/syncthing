@@ -33,9 +33,10 @@ type FsWatcher struct {
 	notifyTimer           *time.Timer
 	notifyTimerNeedsReset bool
 	inProgress            map[string]struct{}
+	tempnamer             scanner.TempNamer
 }
 
-func NewFsWatcher(folderPath string) *FsWatcher {
+func NewFsWatcher(folderPath string, tempnamer scanner.TempNamer) *FsWatcher {
 	return &FsWatcher{
 		folderPath:            folderPath,
 		notifyModelChan:       nil,
@@ -45,6 +46,7 @@ func NewFsWatcher(folderPath string) *FsWatcher {
 		notifyDelay:           fastNotifyDelay,
 		notifyTimerNeedsReset: false,
 		inProgress:            make(map[string]struct{}),
+		tempnamer:             tempnamer,
 	}
 }
 
@@ -109,7 +111,7 @@ func (watcher *FsWatcher) watchFilesystem() {
 func (watcher *FsWatcher) newFsEvent(eventPath string) *FsEvent {
 	if isSubpath(eventPath, watcher.folderPath) {
 		path := relativePath(eventPath, watcher.folderPath)
-		if !shouldIgnore(path) {
+		if !watcher.shouldIgnore(path) {
 			return &FsEvent{path}
 		}
 	}
@@ -192,10 +194,11 @@ func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
 	}
 }
 
-func shouldIgnore(path string) bool {
+func (watcher *FsWatcher) shouldIgnore(path string) bool {
 	return strings.Contains(path, ".syncthing.") &&
 		strings.HasSuffix(path, ".tmp") ||
-		scanner.IsIgnoredPath(path, nil)
+		scanner.IsIgnoredPath(path, nil) ||
+		watcher.tempnamer.IsTemporary(path)
 }
 
 func (watcher *FsWatcher) pathInProgress(path string) bool {
