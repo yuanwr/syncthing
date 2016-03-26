@@ -110,17 +110,12 @@ func (watcher *FsWatcher) watchFilesystem() {
 
 func (watcher *FsWatcher) newFsEvent(eventPath string) *FsEvent {
 	if isSubpath(eventPath, watcher.folderPath) {
-		path := relativePath(eventPath, watcher.folderPath)
+		path, _ := filepath.Rel(watcher.folderPath, eventPath)
 		if !watcher.shouldIgnore(path) {
 			return &FsEvent{path}
 		}
 	}
 	return nil
-}
-
-func relativePath(path string, folderPath string) string {
-	subPath, _ := filepath.Rel(folderPath, path)
-	return subPath
 }
 
 func isSubpath(path string, folderPath string) bool {
