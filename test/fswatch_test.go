@@ -27,15 +27,17 @@ func TestIgnoreOurOwnFsEvents(t *testing.T) {
 	defer checkedStop(t, receiver)
 
 	log.Println("Creating directories and files...")
-	dirs := []string{"d1"}
-	files := []string{"d1/f1.TXT"}
+	dirs := []string{"d1", ".stversions"}
+	files := []string{"d1/f1.TXT",
+		".stignore",
+		makeTempFilename("test")}
 	all := append(files, dirs...)
 	createDirectories(t, "s1", dirs)
 	createFiles(t, "s1", files)
 
 	waitForSync(t, sender)
 
-	expected := len(all)
+	expected := len(all) - 3
 	assertFileCount(t, sender, "default", expected)
 
 	assertFileCount(t, receiver, "default", expected)
