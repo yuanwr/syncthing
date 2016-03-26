@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/syncthing/syncthing/lib/events"
+	"github.com/syncthing/syncthing/lib/scanner"
 )
 
 type FsEvent struct {
@@ -194,7 +195,7 @@ func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
 func shouldIgnore(path string) bool {
 	return strings.Contains(path, ".syncthing.") &&
 		strings.HasSuffix(path, ".tmp") ||
-		path == ".stfolder"
+		scanner.IsIgnoredPath(path, nil)
 }
 
 func (watcher *FsWatcher) pathInProgress(path string) bool {
