@@ -192,7 +192,9 @@ func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
 }
 
 func isSpecialPath(path string) bool {
-	return strings.Contains(path, ".syncthing.") && strings.HasSuffix(path, ".tmp")
+	return strings.Contains(path, ".syncthing.") &&
+		strings.HasSuffix(path, ".tmp") ||
+		path == ".stfolder"
 }
 
 func (watcher *FsWatcher) pathInProgress(path string) bool {
