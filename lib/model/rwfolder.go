@@ -83,7 +83,7 @@ type rwFolder struct {
 
 	folder         string
 	dir            string
-	scanIntv       time.Duration
+	shortScanIntv  time.Duration
 	versioner      versioner.Versioner
 	ignorePerms    bool
 	copiers        int
@@ -122,7 +122,7 @@ func newRWFolder(m *Model, shortID protocol.ShortID, cfg config.FolderConfigurat
 
 		folder:         cfg.ID,
 		dir:            cfg.Path(),
-		scanIntv:       time.Duration(cfg.RescanIntervalS) * time.Second,
+		shortScanIntv:  time.Duration(cfg.RescanIntervalS) * time.Second,
 		ignorePerms:    cfg.IgnorePerms,
 		copiers:        cfg.Copiers,
 		pullers:        cfg.Pullers,
@@ -326,12 +326,12 @@ func (p *rwFolder) Serve() {
 }
 
 func (p *rwFolder) rescheduleScan() {
-	if p.scanIntv == 0 {
+	if p.shortScanIntv == 0 {
 		// We should not run scans, so it should not be rescheduled.
 		return
 	}
 	// Sleep a random time between 3/4 and 5/4 of the configured interval.
-	sleepNanos := (p.scanIntv.Nanoseconds()*3 + rand.Int63n(2*p.scanIntv.Nanoseconds())) / 4
+	sleepNanos := (p.shortScanIntv.Nanoseconds()*3 + rand.Int63n(2*p.shortScanIntv.Nanoseconds())) / 4
 	intv := time.Duration(sleepNanos) * time.Nanosecond
 	l.Debugln(p, "next rescan in", intv)
 	p.scanTimer.Reset(intv)
