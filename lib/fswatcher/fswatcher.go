@@ -25,7 +25,7 @@ type FsEvent struct {
 
 type FsWatcher struct {
 	folderPath            string
-	notifyModelChan       chan<- map[string]*FsEvent
+	notifyModelChan       chan<- []*FsEvent
 	fsEvents              map[string]*FsEvent
 	fsEventChan           <-chan notify.EventInfo
 	WatchingFs            bool
@@ -50,22 +50,22 @@ func NewFsWatcher(folderPath string, tempnamer scanner.TempNamer) *FsWatcher {
 	}
 }
 
-func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan map[string]*FsEvent, error) {
+func (watcher *FsWatcher) StartWatchingFilesystem() (<-chan []*FsEvent, error) {
 	fsEventChan, err := setupNotifications(watcher.folderPath)
 	if fsEventChan != nil {
 		watcher.WatchingFs = true
 		watcher.fsEventChan = fsEventChan
 		go watcher.watchFilesystem()
 	}
-	notifyModelChan := make(chan map[string]*FsEvent)
+	notifyModelChan := make(chan []*FsEvent)
 	watcher.notifyModelChan = notifyModelChan
 	return notifyModelChan, err
 }
 
-func ExtractChangedPaths(events map[string]*FsEvent) []string {
+func ExtractChangedPaths(events []*FsEvent) []string {
 	var paths []string
-	for path := range events {
-		paths = append(paths, path)
+	for i := range events {
+		paths = append(paths, events[i].path)
 	}
 	return paths
 }
@@ -172,11 +172,19 @@ func (watcher *FsWatcher) sendStoredEventsToModelOrSlowDownTimer() {
 	watcher.notifyTimerNeedsReset = true
 	if len(watcher.fsEvents) > 0 {
 		l.Debugf("Notifying about %d fs events\n", len(watcher.fsEvents))
-		watcher.notifyModelChan <- watcher.fsEvents
+		watcher.notifyModelChan <- watcher.events()
 	} else {
 		watcher.slowDownNotifyTimer()
 	}
 	watcher.fsEvents = make(map[string]*FsEvent)
+}
+
+func (watcher *FsWatcher) events() []*FsEvent {
+	list := make([]*FsEvent, 0, len(watcher.fsEvents))
+	for _, event := range watcher.fsEvents {
+		list = append(list, event)
+	}
+	return list
 }
 
 func (watcher *FsWatcher) updateInProgressSet(event events.Event) {
