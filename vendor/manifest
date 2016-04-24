@@ -8,9 +8,46 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/AudriusButkevicius/go-stun/stun",
+			"repository": "https://github.com/AudriusButkevicius/go-stun",
+			"revision": "30681dbd97f56e92dee2f14ca0b7d05a42f65b0f",
+			"branch": "master",
+			"path": "/stun"
+		},
+		{
+			"importpath": "github.com/anacrolix/envpprof",
+			"repository": "https://github.com/anacrolix/envpprof",
+			"revision": "8fa1da4090ff3fd48ec8b5a34bf2d063dbcd5526",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/anacrolix/missinggo",
+			"repository": "https://github.com/anacrolix/missinggo",
+			"revision": "a1677d38428116fd4a108481467f14c5a2fb81ff",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/anacrolix/sync",
+			"repository": "https://github.com/anacrolix/sync",
+			"revision": "812602587b72df6a2a4f6e30536adc75394a374b",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/anacrolix/utp",
+			"repository": "https://github.com/anacrolix/utp",
+			"revision": "e57d077423473cdefed215552947e228992f6217",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/bkaradzic/go-lz4",
 			"repository": "https://github.com/bkaradzic/go-lz4",
 			"revision": "74ddf82598bc4745b965729e9c6a463bedd33049",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/bradfitz/iter",
+			"repository": "https://github.com/bradfitz/iter",
+			"revision": "454541ec3da2a73fc34fd049b19ee5777bf19345",
 			"branch": "master"
 		},
 		{
