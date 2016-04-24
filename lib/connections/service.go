@@ -363,7 +363,7 @@ func (s *Service) createListener(addr string) {
 		return
 	}
 
-	listener := listenerFactory(uri, s.tlsCfg, s.conns, s.natService)
+	listener := listenerFactory(uri, s.cfg, s.tlsCfg, s.conns, s.natService)
 	listener.OnAddressesChanged(s.logListenAddressesChangedEvent)
 	s.mut.Lock()
 	s.listeners[addr] = listener

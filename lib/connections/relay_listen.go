@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/syncthing/syncthing/lib/config"
 	"github.com/syncthing/syncthing/lib/dialer"
 	"github.com/syncthing/syncthing/lib/nat"
 	"github.com/syncthing/syncthing/lib/relay/client"
@@ -164,7 +165,7 @@ func (t *relayListener) String() string {
 	return t.uri.String()
 }
 
-func newRelayListener(uri *url.URL, tlsCfg *tls.Config, conns chan IntermediateConnection, natService *nat.Service) genericListener {
+func newRelayListener(uri *url.URL, _ *config.Wrapper, tlsCfg *tls.Config, conns chan IntermediateConnection, natService *nat.Service) genericListener {
 	return &relayListener{
 		uri:    uri,
 		tlsCfg: tlsCfg,

@@ -39,6 +39,8 @@ type OptionsConfiguration struct {
 	AlwaysLocalNets         []string `xml:"alwaysLocalNet" json:"alwaysLocalNets"`
 	OverwriteNames          bool     `xml:"overwriteNames" json:"overwriteNames" default:"false"`
 	TempIndexMinBlocks      int      `xml:"tempIndexMinBlocks" json:"tempIndexMinBlocks" default:"10"`
+	StunServers             []string `xml:"stunServer" json:"stunServers" default:"default"`
+	StunRenewalM            int      `xml:"stunRenewalMinutes" json:"stunRenewalMinutes" default:"30"`
 
 	DeprecatedUPnPEnabled   bool     `xml:"upnpEnabled" json:"-"`
 	DeprecatedUPnPLeaseM    int      `xml:"upnpLeaseMinutes" json:"-"`

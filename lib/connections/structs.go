@@ -37,7 +37,7 @@ type genericDialer interface {
 	String() string
 }
 
-type listenerFactory func(*url.URL, *tls.Config, chan IntermediateConnection, *nat.Service) genericListener
+type listenerFactory func(*url.URL, *config.Wrapper, *tls.Config, chan IntermediateConnection, *nat.Service) genericListener
 
 type genericListener interface {
 	Serve()
